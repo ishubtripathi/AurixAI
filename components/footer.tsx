@@ -16,7 +16,7 @@ const footerLinks = {
     { href: "/terms", label: "Terms of Service" },
   ],
   social: [
-    { href: "https://github.com", icon: Github, label: "GitHub" },
+    { href: "https://github.com/ishubtripathi/AurixAI", icon: Github, label: "GitHub" },
     { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
     { href: "https://linkedin.com", icon: Linkedin, label: "LinkedIn" },
     { href: "https://youtube.com", icon: Youtube, label: "YouTube" },
@@ -115,7 +115,8 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">© {currentYear} Aurix. All rights reserved.</p>
-          <p className="text-sm text-muted-foreground">Made with care for content learners everywhere.</p>
+          {/* <p className="text-sm text-muted-foreground">Made with care for content learners everywhere.</p> */}
+          <p className="text-sm text-muted-foreground">Developed and managed by team DevIQ</p>
         </div>
       </div>
     </footer>
