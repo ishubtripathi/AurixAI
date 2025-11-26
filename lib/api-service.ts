@@ -1,8 +1,5 @@
 import { isValidYouTubeUrl, fetchVideoInfo, type VideoInfo } from "./youtube"
 
-/**
- * Response type for the summarization API
- */
 export interface SummaryResponse {
   success: boolean
   data?: {
@@ -10,14 +7,12 @@ export interface SummaryResponse {
     detailedSummary: string[]
     videoTitle?: string
     videoInfo?: VideoInfo
+    channel?: string
+    hasTranscript?: boolean
   }
   error?: string
 }
 
-/**
- * Mock API service that simulates YouTube video summarization
- * In production, this would call a real backend API
- */
 export async function summarizeVideo(url: string): Promise<SummaryResponse> {
   // Validate URL first
   if (!isValidYouTubeUrl(url)) {
@@ -27,38 +22,55 @@ export async function summarizeVideo(url: string): Promise<SummaryResponse> {
     }
   }
 
-  // Fetch actual video info
-  const videoInfo = await fetchVideoInfo(url)
+  try {
+    // Fetch actual video info
+    const videoInfo = await fetchVideoInfo(url)
+    
+    if (!videoInfo) {
+      return {
+        success: false,
+        error: "Could not fetch video information. Please check the URL and try again.",
+      }
+    }
 
-  // Simulate API delay (2-4 seconds)
-  const delay = Math.random() * 2000 + 2000
-  await new Promise((resolve) => setTimeout(resolve, delay))
+    // Call your backend API for summarization
+    const response = await fetch('/api/summarize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        videoUrl: url,
+      }),
+    })
 
-  // Simulate occasional API errors (5% chance - reduced for better UX)
-  if (Math.random() < 0.05) {
+    const result = await response.json()
+
+    if (!response.ok) {
+      // Provide more specific error messages
+      if (result.error?.includes('transcript') || result.error?.includes('subtitles')) {
+        throw new Error('This video does not have subtitles available. Try a video with enabled captions.')
+      }
+      throw new Error(result.error || `Failed to summarize video`)
+    }
+
+    return {
+      success: true,
+      data: {
+        videoTitle: result.videoTitle || videoInfo.title,
+        videoInfo: videoInfo,
+        shortSummary: result.shortSummary,
+        detailedSummary: result.keyPoints || [],
+        channel: result.channel,
+        hasTranscript: result.hasTranscript
+      },
+    }
+
+  } catch (error) {
+    console.error('Error summarizing video:', error)
     return {
       success: false,
-      error: "Failed to process video. Please try again later.",
+      error: error instanceof Error ? error.message : "Failed to summarize video. Please try a video with enabled subtitles.",
     }
-  }
-
-  // Mock response data with actual video info
-  return {
-    success: true,
-    data: {
-      videoTitle: videoInfo?.title || "Understanding Modern Web Development",
-      videoInfo: videoInfo || undefined,
-      shortSummary:
-        "This video provides a comprehensive overview of modern web development practices, covering key frameworks like React and Next.js, essential tools for productivity, and best practices for building scalable applications.",
-      detailedSummary: [
-        "Introduction to component-based architecture and its benefits for code reusability and maintainability",
-        "Deep dive into React hooks and state management patterns including useState, useEffect, and custom hooks",
-        "Overview of Next.js features like server-side rendering, static generation, and API routes",
-        "Best practices for TypeScript integration to improve code quality and developer experience",
-        "Performance optimization techniques including code splitting, lazy loading, and caching strategies",
-        "Testing strategies with Jest and React Testing Library for reliable applications",
-        "Deployment and CI/CD pipelines using modern platforms like Vercel and GitHub Actions",
-      ],
-    },
   }
 }
